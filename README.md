@@ -28,6 +28,7 @@
   <img alt="@stickerwhatsappbot" src="https://github.com/DrelezTM/StickerWhatsAppBOT/assets/72683265/2ce59cf0-f26b-4cd0-be1a-12f985720ad9">
 
 * Ready
+  
   ![image](https://github.com/user-attachments/assets/4e59a53d-4110-4484-9301-59dd56f36197)
 
 
