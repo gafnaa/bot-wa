@@ -30,10 +30,10 @@ client.on('ready', () => {
     fs.readFile(consoleText, 'utf-8', (err, data) => {
         if (err) {
             console.log(`[${moment().tz(config.timezone).format('HH:mm:ss')}] Console Text not found!`.yellow);
-            console.log(`[${moment().tz(config.timezone).format('HH:mm:ss')}] ${config.name} is Already!`.green);
+            console.log(`[${moment().tz(config.timezone).format('HH:mm:ss')}] ${config.name} is Running!`.green);
         } else {
             console.log(data.green);
-            console.log(`[${moment().tz(config.timezone).format('HH:mm:ss')}] ${config.name} is Already!`.green);
+            console.log(`[${moment().tz(config.timezone).format('HH:mm:ss')}] ${config.name} is Running!`.green);
         }
     });
 });
@@ -51,7 +51,7 @@ client.on('message', async (message) => {
             // !bot - list semua fitur
             if (message.body === `${config.prefix}bot`) {
                 const fitur = `
-            *[Gafna pen berak]*
+            *[WhatsApp Bot]*
             
             📌 *${config.prefix}sticker* (caption/reply gambar/video)
             📌 *${config.prefix}image* (reply sticker)
@@ -59,8 +59,10 @@ client.on('message', async (message) => {
             📌 *${config.prefix}tagall* (mention semua anggota grup)
             📌 *${config.prefix}test* (cek apakah bot aktif)
             📌 *${config.prefix}bot* (menampilkan daftar fitur ini)
-            
-            🟢 Bot akan otomatis memproses jika digunakan dengan benar. Pastikan reply atau caption digunakan sesuai fungsi.
+            📌 *${config.prefix}quote* (menampilkan quote random)
+
+            Credit:@DrelezTM
+            Edited:@sankya
             `.trim();
                 return client.sendMessage(message.from, fitur);
             }
@@ -84,6 +86,22 @@ client.on('message', async (message) => {
             return;
         }
 
+        // Quote of the day
+        if (message.body === `${config.prefix}quote`) {
+            try {
+                const data = fs.readFileSync('./config/quote.json', 'utf-8'); 
+                const quotes = JSON.parse(data);
+        
+                const random = quotes[Math.floor(Math.random() * quotes.length)];
+                const quoteText = `📜 *Quote Hari Ini:*\n\n"${random.quote}"\n\n– *${random.by}*`;
+        
+                client.sendMessage(message.from, quoteText);
+            } catch (err) {
+                console.error(err);
+                client.sendMessage(message.from, "*[❎]* Gagal mengambil quote.");
+            }
+        }
+        
         // Sticker from media with caption "!sticker"
         if (message.hasMedia && message.caption === `${prefix}sticker`) {
             if (config.log) console.log(`[${'!'.red}] ${message.from.replace("@c.us", "").yellow} created sticker`);
