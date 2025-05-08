@@ -38,6 +38,43 @@ client.on('ready', () => {
     });
 });
 
+const reminders = new Map(); // Untuk menyimpan reminder aktif
+
+// Fungsi parse waktu yang sudah diperbaiki
+function parseTime(timeStr) {
+    if (!timeStr) return null;
+    
+    let milliseconds = 0;
+    const timeUnits = {
+        's': { value: 1000, name: 'detik' },
+        'm': { value: 60 * 1000, name: 'menit' },
+        'h': { value: 60 * 60 * 1000, name: 'jam' },
+        'd': { value: 24 * 60 * 60 * 1000, name: 'hari' }
+    };
+
+    const regex = /(\d+)([smhd])/g;
+    let match;
+    const timeTextParts = []; // Inisialisasi array untuk teks waktu
+    
+    while ((match = regex.exec(timeStr)) !== null) {
+        const [_, value, unit] = match;
+        const timeUnit = timeUnits[unit];
+        if (!timeUnit) continue;
+        
+        milliseconds += parseInt(value) * timeUnit.value;
+        timeTextParts.push(`${value} ${timeUnit.name}`);
+    }
+
+    if (milliseconds <= 0 || timeTextParts.length === 0) {
+        return null;
+    }
+
+    return {
+        durationMs: milliseconds,
+        timeText: timeTextParts.join(' ')
+    };
+}
+
 client.on('message', async (message) => {
     const isGroups = message.from.endsWith('@g.us');
     if ((isGroups && config.groups) || !isGroups) {
@@ -60,9 +97,11 @@ client.on('message', async (message) => {
             📌 *${config.prefix}test* (cek apakah bot aktif)
             📌 *${config.prefix}bot* (menampilkan daftar fitur ini)
             📌 *${config.prefix}quote* (menampilkan quote random)
+            📌 *${config.prefix}remain <waktu> <pesan>* (set reminder)
 
             Credit:@DrelezTM
             Edited:@sankya
+            
             `.trim();
                 return client.sendMessage(message.from, fitur);
             }
@@ -102,6 +141,95 @@ client.on('message', async (message) => {
             }
         }
         
+        // Reminder
+        if (message.body.startsWith(`${prefix}remain`)) {
+            try {
+                const args = message.body.slice(prefix.length + 7).trim().split(' ');
+                if (args.length < 2) {
+                    return client.sendMessage(message.from, 
+                        `❌ Format salah! Contoh:\n` +
+                        `• ${prefix}remain 5m mabar\n` +
+                        `• ${prefix}remain 1h meeting @Teman`);
+                }
+        
+                // Parse waktu
+                const timeStr = args.shift().toLowerCase();
+                const parsedTime = parseTime(timeStr);
+                
+                if (!parsedTime) {
+                    return client.sendMessage(message.from, 
+                        `❌ Format waktu salah! Gunakan:\n` +
+                        `• angka + satuan (s/m/h/d)\n` +
+                        `Contoh: 30s, 5m, 1h, 2d, 1h30m`);
+                }
+        
+                const { durationMs, timeText } = parsedTime;
+                let reminderMsg = args.join(' ');
+                let mentions = [];
+                let targetUser = message.from;
+        
+                // Cek mention
+                if (message.mentionedIds && message.mentionedIds.length > 0) {
+                    mentions = message.mentionedIds;
+                    targetUser = mentions[0];
+                }
+        
+                // Set reminder
+                const reminderId = Date.now().toString();
+                const reminderTime = Date.now() + durationMs;
+        
+                reminders.set(reminderId, {
+                    chatId: targetUser,
+                    message: reminderMsg,
+                    time: reminderTime,
+                    mentions: mentions,
+                    sender: message.from
+                });
+        
+                // Konfirmasi ke pengguna
+                let replyText = `⏰ *Reminder Set!*\n` +
+                               `⏱ Waktu: ${timeText}\n` +
+                               `📝 Pesan: "${reminderMsg}"`;
+        
+                if (mentions.length > 0) {
+                    const contact = await client.getContactById(targetUser);
+                    replyText += `\n👤 Untuk: @${contact.number}`;
+                }
+        
+                await client.sendMessage(message.from, replyText, {
+                    mentions: mentions
+                });
+        
+                // Set timeout
+                setTimeout(async () => {
+                    if (!reminders.has(reminderId)) return;
+        
+                    const reminder = reminders.get(reminderId);
+                    let reminderText = `🔔 *REMINDER!*\n` +
+                                      `📝 ${reminder.message}\n\n` +
+                                      `_Dari: @${message.from.replace('@c.us', '')}_`;
+        
+                    try {
+                        await client.sendMessage(reminder.chatId, reminderText, {
+                            mentions: [reminder.sender, ...reminder.mentions]
+                        });
+                    } catch (err) {
+                        console.error('Gagal mengirim reminder:', err);
+                        if (reminder.chatId !== message.from) {
+                            await client.sendMessage(message.from, 
+                                `❌ Gagal mengirim reminder ke ${reminder.chatId}`);
+                        }
+                    }
+        
+                    reminders.delete(reminderId);
+                }, durationMs);
+        
+            } catch (err) {
+                console.error('Error dalam remain command:', err);
+                client.sendMessage(message.from, '❌ Terjadi error saat memproses reminder');
+            }
+        }
+
         // Sticker from media with caption "!sticker"
         if (message.hasMedia && message.caption === `${prefix}sticker`) {
             if (config.log) console.log(`[${'!'.red}] ${message.from.replace("@c.us", "").yellow} created sticker`);
