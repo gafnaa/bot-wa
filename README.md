@@ -1,15 +1,4 @@
 # StickerWhatsAppBOT
-<p align="center">
-
-  <img alt="@stickerwhatsappbot" style="width: 150px;" src="https://github.com/DrelezTM/StickerWhatsAppBOT/assets/72683265/d3d504a6-7ce4-4937-8182-c37b8a86b456">
-</p>
-<div align="center">
-  <h3>StickerWhatsAppBOT</h3>
-  <p>Sticker WhatsAppBOT with <a href="https://github.com/pedroslopez/whatsapp-web.js/">whatsapp-web.js</a> and <a href="https://nodejs.org/en/">nodejs</a></p>
-</div>
-<div align="center">
-  <a href="#warning">Warning</a> | <a href="https://dsc.gg/DrelezTM">Report Bug</a> | <a href="https://github.com/DrelezTM/StickerWhatsAppBOT/issues">Issues</a>
-</div>
 
 ## Installation 📑
 * Clone Repository
@@ -74,9 +63,19 @@
   |        Supports Reply Gif to Sticker        |   ✅    |
   |      Supports Reply Stickers to Images      |   ✅    |
 
+  ### New Features
+  |         Features          | Status |
+  |:-------------------------:|:------:|
+  | Welcome & Goodbye Message |   ✅    |
+  |  Tag all member in group  |   ✅    |
+  |   Generate random Quote   |   ✅    |
+  |     Message Reminder      |   ✅    |
+  
+
 
 ## Screenshot
-![image](https://github.com/user-attachments/assets/34e73b5c-1aad-4169-9713-6785c68d7e83)
+![image](https://github.com/user-attachments/assets/8ebc0511-b8b5-4b17-98c0-cf6347a0fa11)
+
 
 
 ## Built With 🛠
