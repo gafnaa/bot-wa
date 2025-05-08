@@ -1,4 +1,4 @@
-# StickerWhatsAppBOT
+# WhatsAppBOT
 
 ## Installation 📑
 * Clone Repository
