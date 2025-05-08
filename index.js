@@ -39,113 +39,160 @@ client.on('ready', () => {
 });
 
 client.on('message', async (message) => {
-    const isGroups = message.from.endsWith('@g.us') ? true : false;
+    const isGroups = message.from.endsWith('@g.us');
     if ((isGroups && config.groups) || !isGroups) {
 
-        // Image to Sticker (Auto && Caption)
-        if ((message.type == "image" || message.type == "video" || message.type  == "gif") || (message._data.caption == `${config.prefix}sticker`)) {
+        const { prefix } = config;
+                    // !test - cek apakah bot aktif
+                if (message.body === `${config.prefix}test`) {
+                return client.sendMessage(message.from, "*[✅]* Bot aktif dan siap digunakan!");
+            }
+
+            // !bot - list semua fitur
+            if (message.body === `${config.prefix}bot`) {
+                const fitur = `
+            *[Gafna pen berak]*
+            
+            📌 *${config.prefix}sticker* (caption/reply gambar/video)
+            📌 *${config.prefix}image* (reply sticker)
+            📌 *${config.prefix}change <nama> | <author>* (reply sticker)
+            📌 *${config.prefix}tagall* (mention semua anggota grup)
+            📌 *${config.prefix}test* (cek apakah bot aktif)
+            📌 *${config.prefix}bot* (menampilkan daftar fitur ini)
+            
+            🟢 Bot akan otomatis memproses jika digunakan dengan benar. Pastikan reply atau caption digunakan sesuai fungsi.
+            `.trim();
+                return client.sendMessage(message.from, fitur);
+            }
+
+
+        // Tag All
+        if (message.body === `${config.prefix}tagall`) {
+            if (!isGroups) return client.sendMessage(message.from, "*[❎]* Fitur ini hanya untuk grup!");
+            
+            const chat = await message.getChat();
+            let mentions = [];
+            let text = `📢 Mention All:\n`;
+
+            for (let participant of chat.participants) {
+                const contact = await client.getContactById(participant.id._serialized);
+                mentions.push(contact);
+                text += `@${contact.number} `;
+            }
+
+            chat.sendMessage(text, { mentions });
+            return;
+        }
+
+        // Sticker from media with caption "!sticker"
+        if (message.hasMedia && message.caption === `${prefix}sticker`) {
             if (config.log) console.log(`[${'!'.red}] ${message.from.replace("@c.us", "").yellow} created sticker`);
             client.sendMessage(message.from, "*[⏳]* Loading..");
             try {
                 const media = await message.downloadMedia();
-                client.sendMessage(message.from, media, {
+                await client.sendMessage(message.from, media, {
                     sendMediaAsSticker: true,
-                    stickerName: config.name, // Sticker Name = Edit in 'config/config.json'
-                    stickerAuthor: config.author // Sticker Author = Edit in 'config/config.json'
-                }).then(() => {
-                    client.sendMessage(message.from, "*[✅]* Successfully!");
+                    stickerName: config.name,
+                    stickerAuthor: config.author
                 });
+                client.sendMessage(message.from, "*[✅]* Successfully!");
             } catch {
                 client.sendMessage(message.from, "*[❎]* Failed!");
             }
+        }
 
-        // Image to Sticker (With Reply Image)
-        } else if (message.body == `${config.prefix}sticker`) {
-            if (config.log) console.log(`[${'!'.red}] ${message.from.replace("@c.us", "").yellow} created sticker`);
-            const quotedMsg = await message.getQuotedMessage(); 
+        // Sticker from replied media
+        else if (message.body === `${prefix}sticker`) {
+            const quotedMsg = await message.getQuotedMessage();
             if (message.hasQuotedMsg && quotedMsg.hasMedia) {
+                if (config.log) console.log(`[${'!'.red}] ${message.from.replace("@c.us", "").yellow} created sticker`);
                 client.sendMessage(message.from, "*[⏳]* Loading..");
                 try {
                     const media = await quotedMsg.downloadMedia();
-                    client.sendMessage(message.from, media, {
+                    await client.sendMessage(message.from, media, {
                         sendMediaAsSticker: true,
-                        stickerName: config.name, // Sticker Name = Edit in 'config/config.json'
-                        stickerAuthor: config.author // Sticker Author = Edit in 'config/config.json'
-                    }).then(() => {
-                        client.sendMessage(message.from, "*[✅]* Successfully!");
+                        stickerName: config.name,
+                        stickerAuthor: config.author
                     });
+                    client.sendMessage(message.from, "*[✅]* Successfully!");
                 } catch {
                     client.sendMessage(message.from, "*[❎]* Failed!");
                 }
             } else {
                 client.sendMessage(message.from, "*[❎]* Reply Image First!");
             }
+        }
 
-        // Sticker to Image (Auto)
-        } else if (message.type == "sticker") {
-            if (config.log) console.log(`[${'!'.red}] ${message.from.replace("@c.us", "").yellow} convert sticker into image`);
-            client.sendMessage(message.from, "*[⏳]* Loading..");
-            try {
-                const media = await message.downloadMedia();
-                client.sendMessage(message.from, media).then(() => {
-                    client.sendMessage(message.from, "*[✅]* Successfully!");
-                });  
-            } catch {
-                client.sendMessage(message.from, "*[❎]* Failed!");
-            }
-
-        // Sticker to Image (With Reply Sticker)
-        } else if (message.body == `${config.prefix}image`) {
-            if (config.log) console.log(`[${'!'.red}] ${message.from.replace("@c.us", "").yellow} convert sticker into image`);
-            const quotedMsg = await message.getQuotedMessage(); 
+        // Sticker to Image via reply only
+        else if (message.body === `${prefix}image`) {
+            const quotedMsg = await message.getQuotedMessage();
             if (message.hasQuotedMsg && quotedMsg.hasMedia) {
+                if (config.log) console.log(`[${'!'.red}] ${message.from.replace("@c.us", "").yellow} convert sticker into image`);
                 client.sendMessage(message.from, "*[⏳]* Loading..");
                 try {
                     const media = await quotedMsg.downloadMedia();
-                    client.sendMessage(message.from, media).then(() => {
-                        client.sendMessage(message.from, "*[✅]* Successfully!");
-                    });
+                    await client.sendMessage(message.from, media);
+                    client.sendMessage(message.from, "*[✅]* Successfully!");
                 } catch {
                     client.sendMessage(message.from, "*[❎]* Failed!");
                 }
             } else {
                 client.sendMessage(message.from, "*[❎]* Reply Sticker First!");
             }
+        }
 
-        // Claim or change sticker name and sticker author
-        } else if (message.body.startsWith(`${config.prefix}change`)) {
-            if (config.log) console.log(`[${'!'.red}] ${message.from.replace("@c.us", "").yellow} change the author name on the sticker`);
-            if (message.body.includes('|')) {
-                let name = message.body.split('|')[0].replace(message.body.split(' ')[0], '').trim();
-                let author = message.body.split('|')[1].trim();
-                const quotedMsg = await message.getQuotedMessage(); 
-                if (message.hasQuotedMsg && quotedMsg.hasMedia) {
-                    client.sendMessage(message.from, "*[⏳]* Loading..");
-                    try {
-                        const media = await quotedMsg.downloadMedia();
-                        client.sendMessage(message.from, media, {
-                            sendMediaAsSticker: true,
-                            stickerName: name,
-                            stickerAuthor: author
-                        }).then(() => {
-                            client.sendMessage(message.from, "*[✅]* Successfully!");
-                        });
-                    } catch {
-                        client.sendMessage(message.from, "*[❎]* Failed!");
-                    }
-                } else {
-                    client.sendMessage(message.from, "*[❎]* Reply Sticker First!");
+        // Change sticker metadata via reply
+        else if (message.body.startsWith(`${prefix}change`)) {
+            const quotedMsg = await message.getQuotedMessage();
+            if (message.body.includes('|') && message.hasQuotedMsg && quotedMsg.hasMedia) {
+                if (config.log) console.log(`[${'!'.red}] ${message.from.replace("@c.us", "").yellow} change sticker metadata`);
+                const [namePart, authorPart] = message.body.split('|');
+                const name = namePart.replace(`${prefix}change`, '').trim();
+                const author = authorPart.trim();
+
+                client.sendMessage(message.from, "*[⏳]* Loading..");
+                try {
+                    const media = await quotedMsg.downloadMedia();
+                    await client.sendMessage(message.from, media, {
+                        sendMediaAsSticker: true,
+                        stickerName: name,
+                        stickerAuthor: author
+                    });
+                    client.sendMessage(message.from, "*[✅]* Successfully!");
+                } catch {
+                    client.sendMessage(message.from, "*[❎]* Failed!");
                 }
             } else {
-                client.sendMessage(message.from, `*[❎]* Run the command :\n*${config.prefix}change <name> | <author>*`);
+                client.sendMessage(message.from, `*[❎]* Format salah:\n*${prefix}change <name> | <author>* (reply sticker)`);
             }
-        
-        // Read chat
-        } else {
-            client.getChatById(message.id.remote).then(async (chat) => {
-                await chat.sendSeen();
-            });
         }
+
+        // Mark chat as seen
+        else {
+            const chat = await client.getChatById(message.id.remote);
+            await chat.sendSeen();
+        }
+    }
+});
+
+// --- Welcome & Goodbye Events (DILUAR event 'message') ---
+client.on('group_join', async (notification) => {
+    const chat = await notification.getChat();
+    const contact = await notification.getContact();
+    if (config.groups) {
+        chat.sendMessage(`👋 Selamat datang @${contact.number} di *${chat.name}*!\nJangan lupa baca deskripsi grup ya 🙏`, {
+            mentions: [contact]
+        });
+    }
+});
+
+client.on('group_leave', async (notification) => {
+    const chat = await notification.getChat();
+    const contact = await notification.getContact();
+    if (config.groups) {
+        chat.sendMessage(`👋 Selamat tinggal @${contact.number}, semoga sukses di perjalanan selanjutnya.`, {
+            mentions: [contact]
+        });
     }
 });
 
