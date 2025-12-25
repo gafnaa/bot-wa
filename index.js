@@ -32,10 +32,27 @@ const client = new Client({
 const config = require("./config/config.json");
 
 client.on("qr", (qr) => {
+  // Tampilkan log waktu
   console.log(
-    `[${moment().tz(config.timezone).format("HH:mm:ss")}] Scan the QR below : `
+    `[${moment().tz(config.timezone).format("HH:mm:ss")}] QR Code received!`
   );
+
+  // 1. Coba tampilkan QR Code standard (siapa tahu terbaca)
   qrcode.generate(qr, { small: true });
+
+  // 2. Tampilkan String Mentah sebagai cadangan (Solusi Paling Aman)
+  console.log(
+    "\n=================================================================="
+  );
+  console.log("JIKA QR CODE DI ATAS RUSAK/BERANTAKAN, COPY KODE DI BAWAH INI:");
+  console.log("Paste kode tersebut ke: https://www.qr-code-generator.com/");
+  console.log(
+    "=================================================================="
+  );
+  console.log(qr); // <--- Ini string mentahnya
+  console.log(
+    "==================================================================\n"
+  );
 });
 
 client.on("ready", () => {
@@ -175,7 +192,7 @@ Edited:@sankya
         const quotes = JSON.parse(data);
 
         const random = quotes[Math.floor(Math.random() * quotes.length)];
-        const quoteText = `📜 *Quote Hari Ini:*\n\n"${random.quote}"\n\n– *${random.by}*`;
+        const quoteText = `qr📜 *Quote Hari Ini:*\n\n"${random.quote}"\n\n– *${random.by}*`;
 
         client.sendMessage(message.from, quoteText);
       } catch (err) {
