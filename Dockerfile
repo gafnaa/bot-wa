@@ -1,31 +1,30 @@
-# Gunakan Node.js versi LTS slim agar lebih ringan
+# Gunakan Node.js versi LTS slim
 FROM node:18-slim
 
-# Install dependencies sistem yang dibutuhkan untuk Puppeteer (Chromium) & FFmpeg
-# Kita install chromium & ffmpeg secara manual lewat apt-get
+# Install dependencies sistem
+# PERBAIKAN: Kita menambahkan 'git' di baris ke-6 agar npm bisa download dari GitHub
 RUN apt-get update \
-    && apt-get install -y wget gnupg \
+    && apt-get install -y wget gnupg git \
     && apt-get install -y chromium \
     && apt-get install -y ffmpeg \
     && apt-get install -y fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Environment Variables
-# Ini memberitahu Puppeteer untuk menggunakan Chromium yang sudah kita install (bukan download lagi)
+# Set Environment Variables untuk Puppeteer
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
-# Buat folder kerja di dalam container
+# Setup working directory
 WORKDIR /app
 
-# Copy package.json dan package-lock.json (jika ada)
+# Copy package files
 COPY package*.json ./
 
-# Install dependencies Node.js
+# Install dependencies Node.js (sekarang sudah ada git, jadi ini akan berhasil)
 RUN npm install
 
-# Copy seluruh sisa kode source ke dalam container
+# Copy seluruh source code
 COPY . .
 
-# Command untuk menjalankan bot
+# Command start
 CMD ["node", "index.js"]
